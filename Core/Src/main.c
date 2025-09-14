@@ -23,6 +23,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -44,18 +47,22 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint32_t time_ms = 0; //ölçüm zamanı (ms cinsinden)
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void uart_print(char *msg); 		//UART'a mesaj göndermek için kullanılacak fonksiyon prototipi
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+//UART üzerinden string gönderme fonksiyonu
+void uart_print(char *msg){
+	HAL_UART_Transmit(&huart2,(uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+}
 /* USER CODE END 0 */
 
 /**
@@ -90,12 +97,50 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  srand(HAL_GetTick()); 				// rastgele değer üreten fonksiyon
+  uart_print("time,temp,volt\r\n");     // CSV başlık satırı
+  uint32_t count = 0;				    // değerleri 10 saniye boyunca almamızı sağlayacak sayaç
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  if(count < 100) 									// 10 saniye boyunca ölçüm yap
+	  {
+		  HAL_Delay(100); 								// 100ms bekle
+		  time_ms += 100;			   			   	    // toplam süreyi 100ms artır
+		  count++; 		               					// sayaçı 1 artır
+
+		  int extreme_value = (rand() % 100 < 3);       // %3 ihtimalle sınırdışı değer üret
+		  int temp = 20 + rand() % 36;					// normal sıcaklık 20-55°C aralığında
+		  if(extreme_value)
+			  temp = 56 + rand() % 10;					// sınırdışı durumda sıcaklık 56-65°C aralığında
+
+		  int volt = 55 + rand() % 18;					// normal voltaj 55-72V aralığında
+		  if(extreme_value)
+			  volt = 50 + rand() % 5;					// sınırdışı durumda voltaj 50-54V aralığında
+
+		  char buffer[64]; 												//UART ile gönderilecek veriyi tutan buffer
+		  sprintf(buffer, "%lu,%d,%d\r\n", time_ms, temp, volt); 		// CSV formatında string oluştur
+		  uart_print(buffer);  											// UART üzerinden gönder
+
+
+
+		  //sınırdışı değerler için uyarılar
+
+		  if(volt < 60 && temp > 50){
+			  uart_print("!!! SYSTEM ERROR !!!\r\n");					// sistem hata durumuna geçti
+		  }
+		  else if(volt < 60){
+			  uart_print("!!! LOW VOLTAGE WARNING !!! \r\n");			// düşük voltaj uyarısı
+		  }
+		  else if(temp > 50){
+			  uart_print("!!! OVER TEMPERATURE !!! \r\n");				// yüksek sıcaklık uyarısı
+		  }
+
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
