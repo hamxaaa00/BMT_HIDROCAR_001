@@ -47,6 +47,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+int volt = 0;
+int temp = 0;
+int extreme_value = 0;
+char buffer[64];
 uint32_t time_ms = 0; //ölçüm zamanı (ms cinsinden)
 /* USER CODE END PV */
 
@@ -113,19 +117,18 @@ int main(void)
 		  time_ms += 100;			   			   	    // toplam süreyi 100ms artır
 		  count++; 		               					// sayaçı 1 artır
 
-		  int extreme_value = (rand() % 100 < 3);       // %3 ihtimalle sınırdışı değer üret
-		  int temp = 20 + rand() % 36;					// normal sıcaklık 20-55°C aralığında
+		  extreme_value = (rand() % 100 < 3);       // %3 ihtimalle sınırdışı değer üret
+		  temp = 20 + rand() % 36;					// normal sıcaklık 20-55°C aralığında
 		  if(extreme_value)
 			  temp = 56 + rand() % 10;					// sınırdışı durumda sıcaklık 56-65°C aralığında
 
-		  int volt = 55 + rand() % 18;					// normal voltaj 55-72V aralığında
+		  volt = 55 + rand() % 18;					// normal voltaj 55-72V aralığında
 		  if(extreme_value)
 			  volt = 50 + rand() % 5;					// sınırdışı durumda voltaj 50-54V aralığında
 
-		  char buffer[64]; 												//UART ile gönderilecek veriyi tutan buffer
+		  											//UART ile gönderilecek veriyi tutan buffer
 		  sprintf(buffer, "%lu,%d,%d\r\n", time_ms, temp, volt); 		// CSV formatında string oluştur
 		  uart_print(buffer);  											// UART üzerinden gönder
-
 
 
 		  //sınırdışı değerler için uyarılar
